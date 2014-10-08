@@ -1,0 +1,1 @@
+cli = require './lib/cli'
