@@ -1,0 +1,5 @@
+#!/usr/bin/env coffee
+
+process.title = "restcli";
+require("../app");
+
