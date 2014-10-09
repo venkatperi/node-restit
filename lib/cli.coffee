@@ -7,7 +7,6 @@ configApi = require './configureApi'
 cmdOptions = ( cmd, name ) ->
   cmd.option "api",
     abbr : 'a'
-    required : true
     help : "Name of the API (from config)"
 
   .option "resource",
@@ -25,6 +24,11 @@ cmdOptions = ( cmd, name ) ->
     required : false
     help : "request body"
 
+  .option 'query',
+    abbr : 'q'
+    required : false
+    help : "query"
+
   .option 'where',
     abbr : 'w'
     required : false
@@ -34,7 +38,7 @@ cmdOptions = ( cmd, name ) ->
 
   .help "Send '#{name}' REST command"
 
-for cmd in [ 'create', 'update', 'find', 'findOne', 'exists', 'get', 'delete', 'count' ]
+for cmd in [ 'create', 'update', 'find', 'findOne', 'exists', 'show', 'delete', 'count', 'get', 'put', 'post' ]
   cmdOptions parser.command( cmd ), cmd
 
 parser.command "set-config"
@@ -48,6 +52,10 @@ parser.command "set-config"
 .option "header",
   abbr : 'h'
   help : "Add/remove request headers"
+.option "default",
+  abbr : 'd'
+  flag : true
+  help : "Set as default API"
 .callback configApi.set
 
 parser.command "show-config"

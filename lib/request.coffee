@@ -5,6 +5,7 @@ Q = require 'q'
 write = require './write'
 CoffeeScript = require 'coffee-script'
 httpStatus = require 'http-status'
+error = require './error'
 
 toObject = ( data ) ->
   try data = JSON.parse data if typeof data is "string"
@@ -20,8 +21,11 @@ send = ( req ) ->
   .on 'fail', ( data, res ) -> d.reject [ toObject( data ), res ]
   d.promise
 
-
 commands =
+  get : { method : "GET", path : ( r, id ) -> if id? then "/r/#{id}" else "/#{r}" }
+  put : { method : "PUT", path : ( r, id ) -> if id? then "/r/#{id}" else "/#{r}" }
+  post : { method : "POST", path : ( r, id ) -> if id? then "/r/#{id}" else "/#{r}" }
+
   create : #/Cars Create a new instance of the model and persist it into the data source
     method : "POST"
     path : ( r ) -> "/#{r}"
@@ -30,7 +34,7 @@ commands =
     method : "GET"
     path : ( r, id ) -> "/#{r}/#{id}"
 
-  get : #/Cars/{id} Find a model instance by id from the data source
+  show : #/Cars/{id} Find a model instance by id from the data source
     method : "GET"
     path : ( r ) -> "/#{r}"
 
@@ -52,33 +56,45 @@ commands =
 
 
 request = ( opts ) ->
-  cmd = commands[ opts.op ]
-  throw new Error "bad command" unless cmd?
-  throw new Error "API name missing" unless opts.api?
+  try
+    cmd = commands[ opts.op ]
+    throw error "bad command" unless cmd?
+    apiName = opts.api or conf.get "api:default"
+    throw error "API name missing" unless apiName?
 
-  apiConfig = conf.get "api:#{opts.api}"
-  throw new Error "API not found in config" unless apiConfig?
+    apiConfig = conf.get "api:#{apiName}"
+    throw error "API not found in config" unless apiConfig?
 
-  options = { method : cmd.method }
+    options = { method : cmd.method }
 
-  options.headers = _.clone apiConfig.headers if apiConfig.headers?
+    options.headers = _.clone apiConfig.headers if apiConfig.headers?
 
-  if opts.where?
-    options.query ?= {}
-    options.query.where = opts.where
+    if opts.where?
+      options.query ?= {}
+      options.query.where = opts.where
 
-  if opts.data?
-    try
-      data = CoffeeScript.eval opts.data
-      options.data = JSON.stringify data
-    catch err
-      return Q.reject { error : { message : err.message + ". Please check syntax of the 'data' option." } }
+    if opts.query?
+      try
+        data = CoffeeScript.eval opts.query
+        options.query ?= {}
+        _.extend options.query, data
+      catch err
+        return Q.reject { error : { message : err.message + ". Please check syntax of the 'data' option." } }
 
-    options.headers ?= {}
-    options.headers[ "Content-type" ] = "application/json"
+    if opts.data?
+      try
+        data = CoffeeScript.eval opts.data
+        options.data = JSON.stringify data
+      catch err
+        return Q.reject { error : { message : err.message + ". Please check syntax of the 'data' option." } }
 
-  url = "#{apiConfig.url}#{cmd.path( opts.resource, opts.id )}"
-  send -> Rest.request url, options
+      options.headers ?= {}
+      options.headers[ "Content-type" ] = "application/json"
+
+    url = "#{apiConfig.url}#{cmd.path( opts.resource, opts.id )}"
+    send -> Rest.request url, options
+  catch err
+    write err
 
 module.exports = exports = ( cmd ) -> ( opts ) ->
   opts.op = cmd
