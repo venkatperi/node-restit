@@ -1,0 +1,1 @@
+./bin/restcli post -r users -d username:"venkatperi", password:"1234", email:"venkatperi@gmail.com"

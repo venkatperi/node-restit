@@ -5,7 +5,8 @@ request = require './request'
 configApi = require './configureApi'
 
 cmdOptions = ( cmd, name ) ->
-  cmd.option "api",
+  cmd
+  .option "api",
     abbr : 'a'
     help : "Name of the API (from config)"
 
@@ -34,6 +35,11 @@ cmdOptions = ( cmd, name ) ->
     required : false
     help : "'where' query filter"
 
+  .option "header",
+    abbr : 'e'
+    list : true
+    help : "Request headers"
+
   .option "verbose",
     abbr : 'v'
     flag : true
@@ -51,12 +57,16 @@ parser.command "set-config"
   abbr : 'a'
   required : true
   help : "Name of the API"
+
 .option "url",
   abbr : 'u'
   help : "Base URL of the API"
+
 .option "header",
-  abbr : 'h'
+  abbr : 'e'
+  list : true
   help : "Add/remove request headers"
+
 .option "default",
   abbr : 'd'
   flag : true

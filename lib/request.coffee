@@ -6,6 +6,7 @@ write = require './write'
 CoffeeScript = require 'coffee-script'
 httpStatus = require 'http-status'
 error = require './error'
+Headers = require './headers'
 t = require 'exectimer'
 
 toObject = ( data ) ->
@@ -14,76 +15,82 @@ toObject = ( data ) ->
   data
 
 
-send = ( url, options ) ->
-  d = Q.defer()
-  tick = new t.Tick "request"
-  tick.start()
-
-  Rest.request url, options
-  .on 'success', ( data, res ) -> d.resolve [ toObject( data ), res ]
-  .on 'error', ( err, res ) -> d.reject err
-  .on 'timeout', ( ms ) -> d.reject message : "timeout #{ms}", statusCode : 408
-  .on 'fail', ( data, res ) -> d.reject [ toObject( data ), res ]
-
-  d.promise.then ( x ) ->
-    tick.stop()
-    x.push t.timers.request
-    x
-  .fail ( x ) ->
-    tick.stop()
-    x.push t.timers.request
-    x
+_send = ( url, options ) ->
 
 path = ( r, id ) -> if id? then "/r/#{id}" else "/#{r}"
 
-request = ( opts ) ->
-  try
-    apiName = opts.api or conf.get "api:default"
-    throw error "API name missing" unless apiName?
+class Request
+  headers : {}
+  query : {}
+  data : {}
 
-    apiConfig = conf.get "api:#{apiName}"
-    throw error "API not found in config" unless apiConfig?
+  constructor : ( opts ) ->
+    @apiName = opts.api or conf.get "api:default"
+    throw error "API name missing" unless @apiName?
+    @apiConfig = conf.get "api:#{@apiName}"
+    throw error "API not found in config" unless @apiConfig?
+
     if opts.verbose
-      write { apiName : apiName, config : apiConfig }
+      write { apiName : @apiName, config : @apiConfig }
       write ""
 
-    options = { method : opts.op }
+    @method = opts.op or throw "no op"
+    Headers @headers, apiConfig.headers
+    Headers @headers, opt.header
 
-    options.headers = _.clone apiConfig.headers if apiConfig.headers?
-
-    if opts.where?
-      options.query ?= {}
-      options.query.where = opts.where
-
+    options.query.where = opts.where if opts.where?
     if opts.query?
       try
-        data = CoffeeScript.eval opts.query
-        options.query ?= {}
-        _.extend options.query, data
+        _.extend @query, CoffeeScript.eval( opts.query )
       catch err
         return Q.reject { error : { message : err.message + ". Please check syntax of the 'data' option." } }
 
     if opts.data?
       try
-        data = CoffeeScript.eval opts.data
-        options.data = data
+        _.extend @data, CoffeeScript.eval( opts.data )
       catch err
         return Q.reject { error : { message : err.message + ". Please check syntax of the 'data' option." } }
 
-      options.headers ?= {}
-      options.headers[ "Content-type" ] = "application/json"
+    delete @data if  _.isEmpty @data
+    if @data
+      @headers[ "Content-type" ] = "application/json"
+      @data = JSON.stringify @data
 
-    url = "#{apiConfig.url}#{path( opts.resource, opts.id )}"
+    delete @headers if  _.isEmpty @headers
+    delete @query if  _.isEmpty @query
+
+    @url = "#{@apiConfig.url}#{path( opts.resource, opts.id )}"
     if opts.verbose
-      write request : { url : url, options : options }
+      write request : { url : @url, options : @ }
       write ""
       write "Response"
 
-    options.data = JSON.stringify options.data if options.data?
-    send url, options
+  send : =>
+    d = Q.defer()
+    tick = new t.Tick "request"
+    tick.start()
 
+    Rest.request url, options
+    .on 'success', ( data, res ) -> d.resolve [ toObject( data ), res ]
+    .on 'error', ( err, res ) -> d.reject err
+    .on 'timeout', ( ms ) -> d.reject message : "timeout #{ms}", statusCode : 408
+    .on 'fail', ( data, res ) -> d.reject [ toObject( data ), res ]
+
+    d.promise.then ( x ) ->
+      tick.stop()
+      x.push t.timers.request
+      x
+    .fail ( x ) ->
+      tick.stop()
+      x.push t.timers.request
+      x
+
+
+request = ( opts ) ->
+  try
+    new Request( opts ).send()
   catch err
-    write err
+    Q.reject [ err ]
 
 module.exports = exports = ( cmd ) -> ( opts ) ->
   opts.op = cmd
@@ -95,6 +102,7 @@ module.exports = exports = ( cmd ) -> ( opts ) ->
     write data
 
   .fail ( [err, res, timer] ) ->
-    code = httpStatus[ res.statusCode ].toUpperCase()
-    write "> HTTP #{res.statusCode} #{code}, #{timer.duration() / 1000000} ms."
+    if err? and timer?
+      code = httpStatus[ res.statusCode ].toUpperCase()
+      write "> HTTP #{res.statusCode} #{code}, #{timer.duration() / 1000000} ms."
     write err
