@@ -20,48 +20,53 @@ _send = ( url, options ) ->
 path = ( r, id ) -> if id? then "/r/#{id}" else "/#{r}"
 
 class Request
-  headers : {}
-  query : {}
-  data : {}
+  options :
+    headers : {}
+    query : {}
+    data : {}
+    method : "get"
+
+  url : null
 
   constructor : ( opts ) ->
-    @apiName = opts.api or conf.get "api:default"
-    throw error "API name missing" unless @apiName?
-    @apiConfig = conf.get "api:#{@apiName}"
-    throw error "API not found in config" unless @apiConfig?
+    apiName = opts.api or conf.get "api:default"
+    throw error "API name missing" unless apiName?
+    apiConfig = conf.get "api:#{apiName}"
+    throw error "API not found in config" unless apiConfig?
 
     if opts.verbose
-      write { apiName : @apiName, config : @apiConfig }
+      write { apiName : apiName, config : apiConfig }
       write ""
 
-    @method = opts.op or throw "no op"
-    Headers @headers, apiConfig.headers
-    Headers @headers, opt.header
+    @options.method = opts.op or throw "no op"
 
-    options.query.where = opts.where if opts.where?
+    Headers @options.headers, apiConfig.headers
+    Headers @options.headers, opts.header
+
+    @options.query.where = opts.where if opts.where?
     if opts.query?
       try
-        _.extend @query, CoffeeScript.eval( opts.query )
+        _.extend @options.query, CoffeeScript.eval( opts.query )
       catch err
-        return Q.reject { error : { message : err.message + ". Please check syntax of the 'data' option." } }
+        return Q.reject { error : { message : err.message + ". Please check syntax of the 'query' option." } }
 
     if opts.data?
       try
-        _.extend @data, CoffeeScript.eval( opts.data )
+        _.extend @options.data, CoffeeScript.eval( opts.data )
       catch err
         return Q.reject { error : { message : err.message + ". Please check syntax of the 'data' option." } }
 
-    delete @data if  _.isEmpty @data
-    if @data
-      @headers[ "Content-type" ] = "application/json"
-      @data = JSON.stringify @data
+    delete @options.data if  _.isEmpty @options.data
+    if @options.data
+      @options.headers[ "Content-type" ] = "application/json"
+      @options.data = JSON.stringify @options.data
 
-    delete @headers if  _.isEmpty @headers
-    delete @query if  _.isEmpty @query
+    delete @options.headers if  _.isEmpty @options.headers
+    delete @options.query if  _.isEmpty @options.query
 
-    @url = "#{@apiConfig.url}#{path( opts.resource, opts.id )}"
+    @url = "#{apiConfig.url}#{path( opts.resource, opts.id )}"
     if opts.verbose
-      write request : { url : @url, options : @ }
+      write request : { url : @url, options : @options }
       write ""
       write "Response"
 
@@ -70,7 +75,7 @@ class Request
     tick = new t.Tick "request"
     tick.start()
 
-    Rest.request url, options
+    Rest.request @url, @options
     .on 'success', ( data, res ) -> d.resolve [ toObject( data ), res ]
     .on 'error', ( err, res ) -> d.reject err
     .on 'timeout', ( ms ) -> d.reject message : "timeout #{ms}", statusCode : 408
