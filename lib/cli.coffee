@@ -34,11 +34,16 @@ cmdOptions = ( cmd, name ) ->
     required : false
     help : "'where' query filter"
 
+  .option "verbose",
+    abbr : 'v'
+    flag : true
+    help : "verbose output"
+
   .callback request( name )
 
   .help "Send '#{name}' REST command"
 
-for cmd in [ 'create', 'update', 'find', 'findOne', 'exists', 'show', 'delete', 'count', 'get', 'put', 'post' ]
+for cmd in [ 'get', 'put', 'post', 'delete' ]
   cmdOptions parser.command( cmd ), cmd
 
 parser.command "set-config"
