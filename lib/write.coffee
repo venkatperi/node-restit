@@ -10,7 +10,8 @@ write = ( res, opts = {} ) ->
   if typeof res is "string"
     console.log res
   else
-    console.log prettyjson.render res
+    str = if opts.plain then JSON.stringify( res, null, 2 ) else prettyjson.render( res )
+    console.log str
 
   res
 

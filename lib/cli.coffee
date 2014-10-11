@@ -35,6 +35,11 @@ cmdOptions = ( cmd, name ) ->
     required : false
     help : "'where' query filter"
 
+  .option "plain",
+    abbr : 'l'
+    flag: true
+    help : "Plain (no prettyjson) output"
+
   .option "header",
     abbr : 'e'
     list : true

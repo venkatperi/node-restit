@@ -66,7 +66,7 @@ class Request
 
     @url = "#{apiConfig.url}#{path( opts.resource, opts.id )}"
     if opts.verbose
-      write request : { url : @url, options : @options }
+      write request : { url : @url, options : @options }, opts
       write ""
       write "Response"
 
@@ -104,10 +104,10 @@ module.exports = exports = ( cmd ) -> ( opts ) ->
   .then ( [data, res, timer] ) ->
     code = httpStatus[ res.statusCode ].toUpperCase()
     write "> HTTP #{res.statusCode} #{code}, #{timer.duration() / 1000000} ms."
-    write data
+    write data, opts
 
   .fail ( [err, res, timer] ) ->
     if err? and timer?
       code = httpStatus[ res.statusCode ].toUpperCase()
       write "> HTTP #{res.statusCode} #{code}, #{timer.duration() / 1000000} ms."
-    write err
+    write err, opts

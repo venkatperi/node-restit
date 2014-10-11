@@ -9,6 +9,8 @@ module.exports = exports = ( source, headers ) ->
       console.log h
       throw error ("Bad header format '#{h}'") unless h.indexOf( ":" ) > 0
       [name, value] = h.split ":"
+      name = name.trim()
+      value = value.trim()
       if value.length == 0
         delete source[ name ] if source[ name ]
       else
