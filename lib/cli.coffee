@@ -1,6 +1,4 @@
-_ = require 'underscore'
 parser = require( 'nomnom' )
-conf = require './conf'
 request = require './request'
 configApi = require './configureApi'
 
@@ -8,47 +6,60 @@ cmdOptions = ( cmd, name ) ->
   cmd
   .option "api",
     abbr : 'a'
-    help : "Name of the API (from config)"
+    help : "the API (from config). if missing, default api is used."
 
   .option "resource",
     abbr : 'r'
     required : true
-    help : "Name of the REST resource"
+    help : "the REST resource (baseurl/resource/[id])"
 
   .option 'id',
     abbr : 'i'
     required : false
-    help : "Instance ID"
+    help : "optional instance id (e.g. baseurl/resource[/id])"
 
   .option 'data',
     abbr : 'd'
     required : false
-    help : "request body"
+    help : "optional request body"
 
   .option 'query',
     abbr : 'q'
     required : false
-    help : "query"
+    help : "optional query parameters"
 
   .option 'where',
-    abbr : 'w'
     required : false
-    help : "'where' query filter"
+    help : "'where' query filter (sugar for 'where=...')"
 
-  .option "plain",
-    abbr : 'l'
-    flag: true
-    help : "Plain (no prettyjson) output"
+  .option "nopretty",
+    flag : true
+    help : "don't run output through prettyjson"
 
   .option "header",
     abbr : 'e'
     list : true
-    help : "Request headers"
+    help : "request header. can be used more than once. empty value deletes header."
 
   .option "verbose",
     abbr : 'v'
     flag : true
     help : "verbose output"
+
+  .option "nojson",
+    flag : true
+    help : "don't encode body as 'application/json'. uses 'application/x-www-form-urlencoded'"
+
+  .option "nosend",
+    flag : true
+    help : "construct the request but don't send it"
+
+  .option "noinfo",
+    flag : true
+    help : "no informational output"
+
+  .option "jpath",
+    help : "json path selector (transform JSON response)"
 
   .callback request( name )
 
@@ -59,28 +70,28 @@ for cmd in [ 'get', 'put', 'post', 'delete' ]
 
 parser.command "set-config"
 .option "api",
-  abbr : 'a'
+  position : 1
   required : true
-  help : "Name of the API"
+  help : "name of the API"
 
 .option "url",
   abbr : 'u'
-  help : "Base URL of the API"
+  help : "base url of the API"
 
 .option "header",
   abbr : 'e'
   list : true
-  help : "Add/remove request headers"
+  help : "add/remove request headers (leave value empty to remove)"
 
 .option "default",
   abbr : 'd'
   flag : true
-  help : "Set as default API"
+  help : "make this the default API"
 .callback configApi.set
 
 parser.command "show-config"
 .option "api",
-  abbr : 'a'
+  position : 1
   help : "Name of the API"
 .callback configApi.show
 

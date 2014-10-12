@@ -10,33 +10,28 @@ module.exports = ( grunt ) ->
   grunt.initConfig
     pkg : grunt.file.readJSON "package.json"
 
-    browserify :
-      dist :
-        files :
-          "dist/app.js" : [ "app.coffee" ]
-        options :
-          transform : [ 'coffeeify', 'uglifyify' ]
-          browserifyOptions :
-            extensions : [ ".coffee" ]
-            bundleExternal : false
-
     clean :
-      dist : [ "dist" ]
+      dist : [ "dist", "*.{js,map}", "lib/**/*.{map,js}" ]
+
+    coffee :
+      options :
+        sourceMap : false
+        bare : true
+        force : true
+
+      dist :
+        expand : true
+        src : [ "lib/**/*.coffee", "*.coffee", "!Gruntfile.coffee" ]
+        dest : "dist"
+        ext : '.js'
 
     watch :
       dist :
-        files : [ "lib/**/*.coffee", "app.coffee" ]
-        tasks : [ "browserify:dist" ]
+        tasks : [ "coffee:dist" ]
+        files : [ "lib/**/*coffee", "*.coffee" ]
 
-
-  for t in [ "uglify", "watch", "clean", "coffee" ]
-    grunt.loadNpmTasks "grunt-contrib-#{t}"
-
-  for t in [ "browserify" ]
+  for t in [ "execute", "contrib-watch", "contrib-coffee", "contrib-clean" ]
     grunt.loadNpmTasks "grunt-#{t}"
 
-  grunt.registerTask "dist", [
-    "browserify:dist"
-  ]
-
+  grunt.registerTask "default", ["clean:dist","coffee:dist"]
 

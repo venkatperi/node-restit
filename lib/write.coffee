@@ -1,7 +1,3 @@
-_ = require 'underscore'
-color = require './color'
-conf = require './conf'
-printf = require "printf"
 prettyjson = require 'prettyjson'
 
 write = ( res, opts = {} ) ->
@@ -10,7 +6,7 @@ write = ( res, opts = {} ) ->
   if typeof res is "string"
     console.log res
   else
-    str = if opts.plain then JSON.stringify( res, null, 2 ) else prettyjson.render( res )
+    str = if opts[ "nopretty" ] then JSON.stringify res else prettyjson.render( res )
     console.log str
 
   res
