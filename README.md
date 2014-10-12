@@ -73,18 +73,22 @@ e.g.
     coffee app.coffee get <resource> [options]
 
     resource     resource part of the URL (baseurl/resource). required.
+    
 
-    Options:
-       -a, --api       the API (from config). if missing, default api is used.
-       -d, --data      request body
-       -q, --query     query parameters
-       -e, --header    request header(s). can be used more than once. empty value deletes header.
-       --nopretty      don't run output through prettyjson
-       -v, --verbose   verbose output
-       --nojson        don't encode body as 'application/json'. uses 'application/x-www-form-urlencoded'
-       --nosend        construct the request but don't send it
-       --noinfo        no informational output
-       --jpath         json path selector (transform JSON response)
+```bash
+Options:
+    -a, --api       the API (from config). if missing, default api is used.
+    -d, --data      request body
+    -q, --query     query parameters
+    -e, --header    request header(s). can be used more than once. empty value deletes header.
+    --nopretty      don't run output through prettyjson
+    -v, --verbose   verbose output
+    --nojson        don't encode body as 'application/json'. uses 'application/x-www-form-urlencoded'
+    --nosend        construct the request but don't send it
+    --noinfo        no informational output
+    --jpath         json path selector (transform JSON response)
+```
+
      
 ## More Examples
 ### Froyo APIs
@@ -98,4 +102,8 @@ e.g.
     #result
     pecroveswutrurisidecopigijupit
 
-*** &copy; Copyright 2014, Venkat Peri. All Rights Reserved. ***
+## MIT License 
+<small>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</small>
+
+<br>
+<small> <center> &copy; Copyright 2014, Venkat Peri. All Rights Reserved. </center> </small>
