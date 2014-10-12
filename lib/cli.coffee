@@ -2,6 +2,8 @@ parser = require( 'nomnom' )
 request = require './request'
 configApi = require './configureApi'
 
+parser.script "restit"
+
 cmdOptions = ( cmd, name ) ->
   cmd
   .option "api",
@@ -10,36 +12,28 @@ cmdOptions = ( cmd, name ) ->
 
   .option "resource",
     abbr : 'r'
-    required : true
-    help : "the REST resource (baseurl/resource/[id])"
-
-  .option 'id',
-    abbr : 'i'
-    required : false
-    help : "optional instance id (e.g. baseurl/resource[/id])"
+    position : 1
+    default : ""
+    help : "resource part of the URL (baseurl/resource). Defaults to empty string"
 
   .option 'data',
     abbr : 'd'
     required : false
-    help : "optional request body"
+    help : "request body"
 
   .option 'query',
     abbr : 'q'
     required : false
-    help : "optional query parameters"
-
-  .option 'where',
-    required : false
-    help : "'where' query filter (sugar for 'where=...')"
-
-  .option "nopretty",
-    flag : true
-    help : "don't run output through prettyjson"
+    help : "query parameters"
 
   .option "header",
     abbr : 'e'
     list : true
-    help : "request header. can be used more than once. empty value deletes header."
+    help : "request header(s). can be used more than once. empty value deletes header."
+
+  .option "nopretty",
+    flag : true
+    help : "don't run output through prettyjson"
 
   .option "verbose",
     abbr : 'v'

@@ -1,3 +1,0 @@
-./bin/restcli post -r users -d 'username:"venkatperi", email:"venkatperi@gmail.com", password:"1234"' > /dev/null
-password=`./bin/restcli post -r users/login -l -d 'username:"venkatperi", email:"venkatperi@gmail.com", password:"1234"'|grep id |awk -F: '{print $2}'|tr -d ' '|tr -d '"'|tr -d ","`
-./bin/restcli post -r counters -d 'name:"test", value:"1", type:"int"' --header "Authorization: $password" -v

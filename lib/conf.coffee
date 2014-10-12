@@ -2,7 +2,7 @@ nconf = require 'nconf'
 Q = require 'q'
 
 HOME_DIR = process.env.HOME
-nconf.file file : "#{HOME_DIR}/.restcliconf"
+nconf.file file : "#{HOME_DIR}/.restitconf"
 
 module.exports = exports =
   nconf : nconf

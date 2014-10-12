@@ -3,13 +3,22 @@ Rest = require 'restler'
 _ = require 'underscore'
 Q = require 'q'
 write = require './write'
-CoffeeScript = require 'coffee-script'
 httpStatus = require 'http-status'
 error = require './error'
 Headers = require './headers'
 t = require 'exectimer'
 mediaType = require 'media-type'
 jpath = require "JSONpath"
+cson = require 'cson'
+
+#parseCson = Q.nfbind cson.parse
+parseCson = ( str ) ->
+  d = Q.defer()
+  cson.parse str, ( err, obj ) ->
+    return d.reject err if err?
+    d.resolve obj
+  d.promise
+
 
 safeParse = ( data ) ->
   return unless data?
@@ -22,10 +31,6 @@ path = ( r, id ) -> if id? then "/r/#{id}" else "/#{r}"
 helpers = """
 base64 = (str) -> new Buffer(str).toString('base64')
 """
-
-_eval = ( code ) ->
-  #  c = "#{helpers}\n#{code}"
-  CoffeeScript.eval( code )
 
 class Request
   options :
@@ -43,63 +48,67 @@ class Request
     throw error "API not found in config" unless apiConfig?
 
     @options.method = opts.op or throw "no op"
-
     @options.query.where = opts.where if opts.where?
+    @url = "#{apiConfig.url}#{path( opts.resource, opts.id )}"
+    promise = Q()
+
     if opts.query?
-      try
-        _.extend @options.query, _eval( opts.query )
-      catch err
-        return Q.reject { error : { message : err.message + ". Please check syntax of the 'query' option." } }
+      promise = promise
+      .then => parseCson( opts.query )
+      .then ( obj ) => @options.query = obj
 
     if opts.data?
-      try
-        _.extend @options.data, CoffeeScript.eval( opts.data )
-      catch err
-        return Q.reject { error : { message : err.message + ". Please check syntax of the 'data' option." } }
+      promise = promise
+      .then => parseCson( opts.data )
+      .then ( obj ) => @options.data = obj
 
-    Headers @options.headers, apiConfig.headers
-    Headers @options.headers, opts.header
+    @promise = promise
+    .then =>
+      Headers @options.headers, apiConfig.headers
+      Headers @options.headers, opts.header
 
-    if _.isEmpty @options.data
-      delete @options.data
-    else if not opts[ "nojson" ] and not @options.headers[ 'Content-Type' ]?
-      @options.headers[ "Content-Type" ] = "application/json"
+      if _.isEmpty @options.data
+        delete @options.data
+      else if not opts[ "nojson" ] and not @options.headers[ 'Content-Type' ]?
+        @options.headers[ "Content-Type" ] = "application/json"
 
-    if @options.headers[ 'Content-Type' ]?
-      mt = mediaType.fromString @options.headers[ "Content-Type" ]
-      return Q.reject { error : { message : "Bad media type" } } unless mt.isValid()
-      if mt.type is "application" and mt.subtype is "json"
-        @options.data = JSON.stringify @options.data
+      if @options.headers[ 'Content-Type' ]?
+        mt = mediaType.fromString @options.headers[ "Content-Type" ]
+        return Q.reject { error : { message : "Bad media type" } } unless mt.isValid()
+        if mt.type is "application" and mt.subtype is "json"
+          @options.data = JSON.stringify @options.data
 
-    delete @options.headers if  _.isEmpty @options.headers
-    delete @options.query if  _.isEmpty @options.query
+      delete @options.headers if  _.isEmpty @options.headers
+      delete @options.query if  _.isEmpty @options.query
 
-    @url = "#{apiConfig.url}#{path( opts.resource, opts.id )}"
+      if opts.verbose
+        write { apiName : apiName, config : apiConfig }
+        write request : { url : @url, options : @options }, opts
+        write ""
 
-    if opts.verbose
-      write { apiName : apiName, config : apiConfig }
-      write request : { url : @url, options : @options }, opts
-      write ""
+    @promise.done()
 
   send : =>
-    d = Q.defer()
-    tick = new t.Tick "request"
-    tick.start()
+    @promise
+    .then =>
+      d = Q.defer()
+      tick = new t.Tick "request"
+      tick.start()
 
-    Rest.request @url, @options
-    .on 'success', ( data, res ) -> d.resolve [ safeParse( data ), res ]
-    .on 'error', ( err, res ) -> d.reject err
-    .on 'timeout', ( ms ) -> d.reject message : "timeout #{ms}", statusCode : 408
-    .on 'fail', ( data, res ) -> d.reject [ safeParse( data ), res ]
+      Rest.request @url, @options
+      .on 'success', ( data, res ) -> d.resolve [ safeParse( data ), res ]
+      .on 'error', ( err, res ) -> d.reject err
+      .on 'timeout', ( ms ) -> d.reject message : "timeout #{ms}", statusCode : 408
+      .on 'fail', ( data, res ) -> d.reject [ safeParse( data ), res ]
 
-    d.promise.then ( x ) ->
-      tick.stop()
-      x.push t.timers.request
-      x
-    .fail ( x ) ->
-      tick.stop()
-      x.push t.timers.request
-      x
+      d.promise.then ( x ) ->
+        tick.stop()
+        x.push t.timers.request
+        x
+      .fail ( x ) ->
+        tick.stop()
+        x.push t.timers.request
+        x
 
 request = ( opts ) ->
   try
