@@ -1,7 +1,7 @@
 {
   "name": "restit",
-  "version": "1.0.0",
-  "preferGlobal":true,
+  "version": "1.0.1",
+  "preferGlobal": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/venkatperi/node-restit.git"
@@ -43,10 +43,10 @@
   },
   "homepage": "https://github.com/venkatperi/node-restit",
   "scripts": {
-    "prepublish" :"grunt",
+    "prepublish": "grunt",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "bin":"./bin/restit",
+  "bin": "./bin/restit",
   "keywords": [
     "rest",
     "cli"
