@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="restit : Command Line Interface for RESTful APIs">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>restit</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/venkatperi/node-restit">View on GitHub</a>
+
+          <h1 id="project_title">restit</h1>
+          <h2 id="project_tagline">Command Line Interface for RESTful APIs</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/venkatperi/node-restit/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/venkatperi/node-restit/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>
+<a name="overview" class="anchor" href="#overview"><span class="octicon octicon-link"></span></a>Overview</h2>
+
+<p><a href="https://github.com/venkatperi/node-restit">restit</a> is a <a href="http://en.wikipedia.org/wiki/Command-line_interface">command line tool (CLI)</a> for talking to RESTful APIs. It's intended to reduce some of the repetition and verbosity that comes with using general purpose CLI tools such as <a href="http://en.wikipedia.org/wiki/CURL">curl</a> with RESTful APIs.</p>
+
+<p><code>restit</code> requires <code>npm</code>, the <a href="http://npmjs.org">node package manager</a>.</p>
+
+<h2>
+<a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example</h2>
+
+<pre><code>restit get statuses/user_timeline -q 'screen_name:"twitterapi"'
+</code></pre>
+
+<p>In curl:</p>
+
+<pre><code>curl --get -H "Authentication: Bearer TOKEN" "https://api.twitter.com/1.1/statuses/user_timeline.json" -d "screen_name=twitterapi"
+</code></pre>
+
+<h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>
+<strong>API Profiles</strong> Stores common API data such as the base url (e.g. <code>https://api.twitter.com/1.1</code>) and headers (e.g. <code>Authorization: ...</code>) in a config file.</li>
+<li>
+<strong>CSON Objects</strong> Uses CoffeeScript Object Notation  (<a href="https://github.com/bevry/cson">CSON</a>), so you don't have to quote everything. </li>
+<li>
+<strong>JSONPath</strong> Transforms the JSON response with XPath like selectors.</li>
+<li>
+<strong>Pretty JSON</strong> Cleaner output and <em>colors</em>. </li>
+<li>
+<strong>Timing</strong> Reports round trip time.</li>
+</ul>
+
+<h2>
+<a name="install" class="anchor" href="#install"><span class="octicon octicon-link"></span></a>Install</h2>
+
+<pre><code>[sudo] npm install restit -g
+</code></pre>
+
+<h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<pre><code>Usage: restit &lt;command&gt;
+</code></pre>
+
+<p>where command is either a http method or a config command.</p>
+
+<h2>
+<a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h2>
+
+<p><code>restyle</code> stores configuration information in the user's home directory at <code>$HOME/.restitconf</code>.</p>
+
+<h3>
+<a name="edit-configuration" class="anchor" href="#edit-configuration"><span class="octicon octicon-link"></span></a>Edit Configuration</h3>
+
+<pre><code>restit set-config &lt;api&gt; [options]
+
+api     name of the API
+
+Options:
+   -u, --url       base url of the API
+   -e, --header    add/remove request headers (leave value empty to remove)
+   -d, --default   make this the default API
+</code></pre>
+
+<p>To an entry for Twitter's <a href="https://dev.twitter.com/rest/public">REST API</a>, add a OAUTH app/bearer token for authentication and mark it as the default.</p>
+
+<pre><code>set-config twitter11 --url https://api.twitter.com/1.1 --header "Authentication: Bearer TOKEN" --header "Accept-Encoding: gzip" --default
+</code></pre>
+
+<p>Subsequent calls to Twitter's API need not specify the base url or auth token. e.g.</p>
+
+<pre><code>restit get statuses/user_timeline -q 'screen_name:"twitterapi"'
+</code></pre>
+
+<h3>
+<a name="show-configuration" class="anchor" href="#show-configuration"><span class="octicon octicon-link"></span></a>Show Configuration</h3>
+
+<p>Use the <code>show-config</code> command to dump the current configuration.</p>
+
+<pre><code>restit show-config
+</code></pre>
+
+<p>e.g.</p>
+
+<pre><code>twitter:
+    url: https://api.twitter.com
+twitter11:
+    url: https://api.twitter.com/1.1
+default:   twitter11
+</code></pre>
+
+<h2>
+<a name="sending-rest-requests" class="anchor" href="#sending-rest-requests"><span class="octicon octicon-link"></span></a>Sending REST Requests</h2>
+
+<pre><code>coffee app.coffee get &lt;resource&gt; [options]
+
+resource     resource part of the URL (baseurl/resource). required.
+</code></pre>
+
+<div class="highlight highlight-bash"><pre>Options:
+    -a, --api       the API <span class="o">(</span>from config<span class="o">)</span>. <span class="k">if</span> missing, default api is used.
+    -d, --data      request body
+    -q, --query     query parameters
+    -e, --header    request header<span class="o">(</span>s<span class="o">)</span>. can be used more than once. empty value deletes header.
+    --nopretty      don<span class="s1">'t run output through prettyjson</span>
+<span class="s1">    -v, --verbose   verbose output</span>
+<span class="s1">    --nojson        don'</span>t encode body as <span class="s1">'application/json'</span>. uses <span class="s1">'application/x-www-form-urlencoded'</span>
+    --nosend        construct the request but don<span class="err">'</span>t send it
+    --noinfo        no informational output
+    --jpath         json path selector <span class="o">(</span>transform JSON response<span class="o">)</span>
+</pre></div>
+
+<h2>
+<a name="more-examples" class="anchor" href="#more-examples"><span class="octicon octicon-link"></span></a>More Examples</h2>
+
+<h3>
+<a name="froyo-apis" class="anchor" href="#froyo-apis"><span class="octicon octicon-link"></span></a>Froyo APIs</h3>
+
+<pre><code>#setup
+restit set-config --api froyo --url "http://api.froyo.io" --header "Accept: application/vnd.collection.doc+json"
+
+#invoke
+./bin/restit get -a froyo pwd --query "length:30" --jpath "$..password" --noinfo
+
+#result
+pecroveswutrurisidecopigijupit
+</code></pre>
+
+<h2>
+<a name="mit-license" class="anchor" href="#mit-license"><span class="octicon octicon-link"></span></a>MIT License</h2>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+
+<p><br>
+  © Copyright 2014, Venkat Peri. All Rights Reserved.  </p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">restit maintained by <a href="https://github.com/venkatperi">venkatperi</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
