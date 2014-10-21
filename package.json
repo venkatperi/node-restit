@@ -1,6 +1,6 @@
 {
   "name": "restit",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "preferGlobal": true,
   "repository": {
     "type": "git",
